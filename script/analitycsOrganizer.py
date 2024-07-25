@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.types import StructType, StructField, StringType
+from pyspark.sql.types import StructType, StructField, StringType, BooleanType, DateType, TimestampType
 from pyspark.sql.functions import col, sum as sum_, avg, max as max_, first, when, isnull
 from pyspark.sql.types import FloatType
 from pyspark.sql.window import Window
@@ -7,9 +7,24 @@ from pyspark.sql.window import Window
 # Initialize a Spark Session
 spark = SparkSession.builder.appName("PowerAnalyticsOrganizer").getOrCreate()
 
-# Read the data from the CSV file
+# Set column title for every entry
 column_names = ["date", "site", "tag_name", "date_value", "equipment_name", "equipment_type", "hour_value", "joined", "building", "timezone", "value"]
-schema = StructType([StructField(field_name, StringType(), True) for field_name in column_names])
+
+# Predefine the type of data of each column
+schema = StructType([
+    StructField("date", DateType(), True),
+    StructField("site", StringType(), True),
+    StructField("tag_name", StringType(), True),
+    StructField("date_value", TimestampType(), True),
+    StructField("equipment_name", StringType(), True),
+    StructField("equipment_type", StringType(), True),
+    StructField("hour_value", TimestampType(), True),
+    StructField("joined", BooleanType(), True),
+    StructField("building", StringType(), True),
+    StructField("timezone", StringType(), True),
+    StructField("value", FloatType(), True)
+])
+# Read the CSV file, separated by |, without headers because we set them and according to the schema created above
 df = spark.read.csv('inputData/power_analytics_raw_amps_reading_avg_val3_equipment_kw_20240507.csv', sep='|', header=False, schema=schema)
 
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###    TASKS    ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
@@ -17,9 +32,6 @@ df = spark.read.csv('inputData/power_analytics_raw_amps_reading_avg_val3_equipme
     # 1. Find the sum of Value collumn by Equipment name
     ## 2. Find the average of Value collumn based on date_value
     ### 3. Find the maximum value per equipment_name only where joined is true and add datevalue to the data frame
-
-# Convert the value collumn to float
-df = df.withColumn("value", col("value").cast(FloatType()))
 
     # Task # 1. Find the sum of Value collumn by Equipment name
 equipmentUsage = df.groupBy("equipment_name").agg(sum_("value").alias("total_usage"))
@@ -65,7 +77,10 @@ maxValue.show(truncate=False)
 
 
 
-
+## Transformation and action syntax de pe medium.com
+## Orchestration tools (airflow)
+## databases indexes to learn
+## add to aws info and do a lambda function
 
 
 
